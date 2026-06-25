@@ -1,0 +1,99 @@
+name: Build release binaries
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-msys2-ucrt64-gcc:
+    name: Build with MSYS2 UCRT64 GCC
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up MSYS2 UCRT64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            make
+            mingw-w64-ucrt-x86_64-gcc
+
+      - name: Build
+        run: make -f Makefile.mingw
+
+      - name: Package binary
+        run: |
+          mkdir -p dist
+          cp open.exe dist/open-windows-msys2-ucrt64-gcc.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-windows-msys2-ucrt64-gcc
+          path: dist/open-windows-msys2-ucrt64-gcc.exe
+          if-no-files-found: error
+
+  build-msvc:
+    name: Build with MSVC
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install getopt for MSVC
+        shell: pwsh
+        run: vcpkg install getopt:x64-windows
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          set "INCLUDE=%VCPKG_INSTALLATION_ROOT%\installed\x64-windows\include;%INCLUDE%"
+          set "LIB=%VCPKG_INSTALLATION_ROOT%\installed\x64-windows\lib;%LIB%"
+          nmake /f Makefile.msvc
+
+      - name: Package binary
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item open.exe dist/open-windows-msvc.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-windows-msvc
+          path: dist/open-windows-msvc.exe
+          if-no-files-found: error
+
+  create-release:
+    name: Create release
+    runs-on: ubuntu-latest
+    needs:
+      - build-msys2-ucrt64-gcc
+      - build-msvc
+    steps:
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Resolve short commit tag
+        id: release
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: ${{ steps.release.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          files: dist/*.exe
