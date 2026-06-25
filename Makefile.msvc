@@ -9,7 +9,7 @@
 #   nmake /f Makefile.msvc
 
 CC = cl
-CFLAGS = /nologo /W4 /O2
+CFLAGS = /nologo /W4 /O2 /DWIN32_LEAN_AND_MEAN
 LDFLAGS = /nologo
 LDLIBS = getopt.lib ole32.lib shell32.lib
 
