@@ -1,0 +1,1 @@
+gcc -Wall -Wextra -O2 -o open.exe open.c -lole32 -lshell32
