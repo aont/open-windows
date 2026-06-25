@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include <locale.h>
-#include <getopt.h>
+#include <string.h>
 
 static void usage(const wchar_t *prog)
 {
@@ -271,27 +271,26 @@ int main(int argc, char **argv)
     setlocale(LC_ALL, "");
 
     int reveal = 0;
-    int opt;
+    int first_path = 1;
 
-    while ((opt = getopt(argc, argv, "r")) != -1) {
-        switch (opt) {
-        case 'r':
-            reveal = 1;
-            break;
-        default:
-            usage(L"open");
-            return 2;
-        }
+    if (first_path < argc && strcmp(argv[first_path], "-r") == 0) {
+        reveal = 1;
+        first_path++;
     }
 
-    if (optind >= argc) {
+    if (first_path < argc && argv[first_path][0] == '-') {
+        usage(L"open");
+        return 2;
+    }
+
+    if (first_path >= argc) {
         usage(L"open");
         return 2;
     }
 
     if (reveal) {
-        return reveal_in_explorer(argc, argv, optind);
+        return reveal_in_explorer(argc, argv, first_path);
     } else {
-        return open_paths(argc, argv, optind);
+        return open_paths(argc, argv, first_path);
     }
 }

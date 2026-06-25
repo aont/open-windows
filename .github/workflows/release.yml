@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - '**'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build and release Windows binaries
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Derive release tag
+        id: vars
+        shell: bash
+        run: |
+          tag="${GITHUB_SHA::7}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "release_name=open-windows $tag" >> "$GITHUB_OUTPUT"
+
+      - name: Set up MSYS2 UCRT64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            make
+            mingw-w64-ucrt-x86_64-gcc
+
+      - name: Build with MSYS2 UCRT64 GCC
+        shell: msys2 {0}
+        run: |
+          make -f Makefile.mingw clean
+          make -f Makefile.mingw
+          mkdir -p dist
+          cp open.exe dist/open-windows-msys2-ucrt64-gcc.exe
+
+      - name: Build with MSVC
+        shell: cmd
+        run: |
+          call "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          nmake /f Makefile.msvc clean
+          nmake /f Makefile.msvc
+          if not exist dist mkdir dist
+          copy /Y open.exe dist\open-windows-msvc.exe
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "${{ steps.vars.outputs.tag }}" \
+            dist/open-windows-msys2-ucrt64-gcc.exe \
+            dist/open-windows-msvc.exe \
+            --target "$GITHUB_SHA" \
+            --title "${{ steps.vars.outputs.release_name }}" \
+            --notes "Automated release for commit $GITHUB_SHA."
