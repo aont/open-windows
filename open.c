@@ -77,7 +77,10 @@ static wchar_t *dirname_dup(const wchar_t *path)
     wchar_t *p = p1 > p2 ? p1 : p2;
 
     if (!p) {
-        wcscpy(copy, L".");
+        if (wcscpy_s(copy, len + 1, L".") != 0) {
+            free(copy);
+            return NULL;
+        }
         return copy;
     }
 
