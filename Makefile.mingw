@@ -1,7 +1,7 @@
 CC := gcc
-CFLAGS := -Wall -Wextra -O2 -DWIN32_LEAN_AND_MEAN
-LDFLAGS :=
-LDLIBS := -lole32 -lshell32
+CFLAGS := -Wall -Wextra -O2 -ffreestanding -fno-builtin
+LDFLAGS := -nostartfiles -nodefaultlibs -Wl,-e,wWinMainCRTStartup
+LDLIBS := -lshell32 -lole32 -lkernel32
 
 TARGET := open.exe
 SRCS := open.c

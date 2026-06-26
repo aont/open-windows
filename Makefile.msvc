@@ -1,17 +1,14 @@
 # NMAKE makefile for building open.exe with Microsoft Visual C++.
 #
-# This build expects getopt-msvc-helper to be installed and discoverable by
-# MSVC. Before running nmake, add its include and lib directories to INCLUDE
-# and LIB, then link against getopt.lib:
+# This build does not use the C runtime. It links with /NODEFAULTLIB and
+# provides its own wWinMainCRTStartup entry point.
 #
-#   set INCLUDE=%INCLUDE%;path\to\getopt-msvc-helper\include
-#   set LIB=%LIB%;path\to\getopt-msvc-helper\lib
 #   nmake /f Makefile.msvc
 
 CC = cl
-CFLAGS = /nologo /W4 /O2 /DWIN32_LEAN_AND_MEAN
-LDFLAGS = /nologo
-LDLIBS = getopt.lib ole32.lib shell32.lib
+CFLAGS = /nologo /W4 /O2 /DWIN32_LEAN_AND_MEAN /GS-
+LDFLAGS = /nologo /ENTRY:wWinMainCRTStartup /NODEFAULTLIB
+LDLIBS = shell32.lib ole32.lib kernel32.lib
 
 TARGET = open.exe
 SRCS = open.c

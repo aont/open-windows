@@ -5,7 +5,7 @@
 ## Features
 
 - Opens files and directories through the Windows shell.
-- Supports UTF-8 command-line paths and converts them to UTF-16 for Windows APIs.
+- Supports Unicode command-line paths through the native Windows UTF-16 command line.
 - Accepts multiple paths in one invocation.
 - Reveals selected items in File Explorer with the `-r` option.
 
@@ -14,6 +14,8 @@
 - Windows
 - MinGW-w64 or another GCC toolchain that provides the Windows SDK headers and libraries
 - `make`
+
+The executable is built without the C runtime: the MinGW build passes `-nostartfiles -nodefaultlibs`, and the MSVC build passes `/NODEFAULTLIB`.
 
 ## Build
 
